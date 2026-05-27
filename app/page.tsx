@@ -3,9 +3,9 @@
 import React, { useMemo, useState } from "react";
 import { motion } from "framer-motion";
 import {
-  Activity,
   Bot,
   CalendarDays,
+  Check,
   CheckCircle2,
   ChevronRight,
   Circle,
@@ -26,21 +26,6 @@ import {
   Wallet,
   Zap,
 } from "lucide-react";
-function Card({ children, className = "" }: any) {
-  return <div className={`rounded-2xl ${className}`}>{children}</div>;
-}
-
-function CardContent({ children, className = "" }: any) {
-  return <div className={className}>{children}</div>;
-}
-
-function Button({ children, className = "", size, variant, ...props }: any) {
-  return (
-    <button className={className} {...props}>
-      {children}
-    </button>
-  );
-}
 
 const navItems = [
   { label: "Home", icon: Home },
@@ -52,24 +37,24 @@ const navItems = [
   { label: "Journal", icon: FileText },
 ];
 
-const tasks = [
-  { title: "Finish 413 Physiques homepage polish", tag: "websites", priority: "+5" },
-  { title: "Follow up with website lead", tag: "sales", priority: "+3" },
-  { title: "Build Zane session notes", tag: "fitness", priority: "+2" },
-  { title: "Outline Romans study questions", tag: "bible", priority: "+2" },
-  { title: "Review trading journal", tag: "finance", priority: "+1" },
+const startingTasks = [
+  { id: 1, title: "Finish 413 Physiques homepage polish", tag: "websites", priority: "+5", done: false },
+  { id: 2, title: "Follow up with website lead", tag: "sales", priority: "+3", done: false },
+  { id: 3, title: "Build Zane session notes", tag: "fitness", priority: "+2", done: false },
+  { id: 4, title: "Outline Romans study questions", tag: "bible", priority: "+2", done: false },
+  { id: 5, title: "Review trading journal", tag: "finance", priority: "+1", done: false },
 ];
 
-const habits = [
-  { title: "Bible + prayer", meta: "spirit · 0/1" },
-  { title: "Gym / cardio", meta: "body · 0/1" },
-  { title: "Client outreach", meta: "business · 0/5" },
-  { title: "Deep work block", meta: "focus · 0/2 hr" },
-  { title: "Read / study", meta: "mind · 0/30 min" },
-  { title: "Night journal", meta: "reset · 0/1" },
+const startingHabits = [
+  { id: 1, title: "Bible + prayer", meta: "spirit · 0/1", done: false },
+  { id: 2, title: "Gym / cardio", meta: "body · 0/1", done: false },
+  { id: 3, title: "Client outreach", meta: "business · 0/5", done: false },
+  { id: 4, title: "Deep work block", meta: "focus · 0/2 hr", done: false },
+  { id: 5, title: "Read / study", meta: "mind · 0/30 min", done: false },
+  { id: 6, title: "Night journal", meta: "reset · 0/1", done: false },
 ];
 
-const projects = [
+const startingProjects = [
   { name: "413 Physiques", type: "Client Website", status: "Active", progress: 72 },
   { name: "Personal Training", type: "Client Programs", status: "Building", progress: 48 },
   { name: "Nova OS", type: "AI Worker App", status: "MVP", progress: 18 },
@@ -85,15 +70,23 @@ const quickActions = [
   "Generate content ideas",
 ];
 
-function GlassCard({ children, className = "" }) {
+function GlassCard({ children, className = "" }: { children: React.ReactNode; className?: string }) {
   return (
-    <Card className={`border-white/10 bg-white/[0.035] shadow-2xl shadow-black/30 backdrop-blur-xl ${className}`}>
-      <CardContent className="p-4">{children}</CardContent>
-    </Card>
+    <div className={`rounded-3xl border border-white/10 bg-white/[0.035] shadow-2xl shadow-black/30 backdrop-blur-xl ${className}`}>
+      <div className="p-4">{children}</div>
+    </div>
   );
 }
 
-function SectionLabel({ number, title, right }) {
+function Button({ children, className = "", ...props }: any) {
+  return (
+    <button className={`transition active:scale-[0.98] ${className}`} {...props}>
+      {children}
+    </button>
+  );
+}
+
+function SectionLabel({ number, title, right }: { number: string; title: string; right?: string }) {
   return (
     <div className="mb-3 flex items-center justify-between text-[10px] uppercase tracking-[0.24em] text-slate-500">
       <span>// {number} // {title}</span>
@@ -105,6 +98,11 @@ function SectionLabel({ number, title, right }) {
 export default function NovaOSDashboard() {
   const [activeTab, setActiveTab] = useState("Home");
   const [capture, setCapture] = useState("");
+  const [tasks, setTasks] = useState(startingTasks);
+  const [habits, setHabits] = useState(startingHabits);
+  const [projects] = useState(startingProjects);
+  const [goal, setGoal] = useState("");
+  const [goals, setGoals] = useState<string[]>([]);
 
   const today = useMemo(() => {
     return new Date().toLocaleDateString(undefined, {
@@ -113,6 +111,24 @@ export default function NovaOSDashboard() {
       day: "numeric",
     });
   }, []);
+
+  const completedTasks = tasks.filter((task) => task.done).length;
+  const completedHabits = habits.filter((habit) => habit.done).length;
+
+  function addCapture() {
+    if (!capture.trim()) return;
+    setTasks((prev) => [
+      { id: Date.now(), title: capture.trim(), tag: "capture", priority: "+1", done: false },
+      ...prev,
+    ]);
+    setCapture("");
+  }
+
+  function addGoal() {
+    if (!goal.trim()) return;
+    setGoals((prev) => [goal.trim(), ...prev]);
+    setGoal("");
+  }
 
   return (
     <div className="min-h-screen overflow-hidden bg-[#030607] text-slate-100">
@@ -161,10 +177,10 @@ export default function NovaOSDashboard() {
           </nav>
 
           <div className="flex items-center gap-2 text-xs text-slate-400">
-            <Button size="sm" variant="ghost" className="h-8 rounded-xl border border-white/10 bg-white/5 px-3 text-xs text-slate-200 hover:bg-white/10">
+            <Button className="h-8 rounded-xl border border-white/10 bg-white/5 px-3 text-xs text-slate-200 hover:bg-white/10">
               Export
             </Button>
-            <Button size="sm" className="h-8 rounded-xl bg-emerald-400/90 px-3 text-xs font-semibold text-black hover:bg-emerald-300">
+            <Button className="h-8 rounded-xl bg-emerald-400/90 px-3 text-xs font-semibold text-black hover:bg-emerald-300">
               Demo On
             </Button>
             <span className="hidden sm:inline">{today}</span>
@@ -191,8 +207,8 @@ export default function NovaOSDashboard() {
                 </div>
                 <div className="mt-4 grid grid-cols-2 gap-2">
                   <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-3">
-                    <div className="text-[10px] uppercase tracking-[0.2em] text-slate-500">Streak</div>
-                    <div className="mt-2 flex items-end gap-1"><span className="text-2xl font-semibold">0</span><span className="pb-1 text-xs text-slate-500">days</span></div>
+                    <div className="text-[10px] uppercase tracking-[0.2em] text-slate-500">Tasks</div>
+                    <div className="mt-2 flex items-end gap-1"><span className="text-2xl font-semibold">{completedTasks}</span><span className="pb-1 text-xs text-slate-500">/{tasks.length}</span></div>
                   </div>
                   <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-3">
                     <div className="text-[10px] uppercase tracking-[0.2em] text-slate-500">Mode</div>
@@ -218,27 +234,27 @@ export default function NovaOSDashboard() {
                   </svg>
                 </div>
                 <div className="mt-3 grid grid-cols-2 gap-2">
-                  <div className="rounded-2xl border border-white/10 bg-black/25 p-3">
-                    <p className="text-xs text-slate-500">Today</p>
-                    <p className="mt-1 text-xl font-semibold">$0</p>
-                  </div>
-                  <div className="rounded-2xl border border-white/10 bg-black/25 p-3">
-                    <p className="text-xs text-slate-500">Pipeline</p>
-                    <p className="mt-1 text-xl font-semibold">$0</p>
-                  </div>
+                  <div className="rounded-2xl border border-white/10 bg-black/25 p-3"><p className="text-xs text-slate-500">Today</p><p className="mt-1 text-xl font-semibold">$0</p></div>
+                  <div className="rounded-2xl border border-white/10 bg-black/25 p-3"><p className="text-xs text-slate-500">Pipeline</p><p className="mt-1 text-xl font-semibold">$0</p></div>
                 </div>
               </GlassCard>
             </motion.div>
 
             <motion.div initial={{ opacity: 0, x: -18 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.15 }}>
               <GlassCard>
-                <SectionLabel number="03" title="Today · Key" right="+5" />
+                <SectionLabel number="03" title="Today · Key" right={`${completedTasks}/${tasks.length}`} />
                 <div className="space-y-2">
                   {tasks.map((task) => (
-                    <button key={task.title} className="group flex w-full items-center gap-3 rounded-2xl border border-white/10 bg-black/20 p-3 text-left transition hover:bg-white/[0.06]">
-                      <Circle className="h-4 w-4 text-slate-600 group-hover:text-emerald-300" />
+                    <button
+                      key={task.id}
+                      onClick={() => setTasks((prev) => prev.map((t) => t.id === task.id ? { ...t, done: !t.done } : t))}
+                      className={`group flex w-full items-center gap-3 rounded-2xl border border-white/10 p-3 text-left transition ${task.done ? "bg-emerald-400/10" : "bg-black/20 hover:bg-white/[0.06]"}`}
+                    >
+                      <span className={`flex h-5 w-5 items-center justify-center rounded-md border ${task.done ? "border-emerald-300 bg-emerald-300 text-black" : "border-slate-700 text-transparent"}`}>
+                        <Check className="h-3.5 w-3.5" />
+                      </span>
                       <div className="min-w-0 flex-1">
-                        <p className="truncate text-sm text-slate-200">{task.title}</p>
+                        <p className={`truncate text-sm ${task.done ? "text-slate-500 line-through" : "text-slate-200"}`}>{task.title}</p>
                         <p className="text-[10px] uppercase tracking-[0.18em] text-slate-500">{task.tag}</p>
                       </div>
                       <span className="text-xs text-slate-500">{task.priority}</span>
@@ -269,28 +285,33 @@ export default function NovaOSDashboard() {
                     <input
                       value={capture}
                       onChange={(e) => setCapture(e.target.value)}
+                      onKeyDown={(e) => e.key === "Enter" && addCapture()}
                       placeholder="Capture an idea, task, client note, or command..."
                       className="h-11 w-full rounded-2xl border border-white/10 bg-black/35 pl-10 pr-4 text-sm text-slate-100 outline-none placeholder:text-slate-600 focus:border-emerald-300/40"
                     />
                   </div>
-                  <Button className="h-11 rounded-2xl bg-white text-black hover:bg-slate-200"><Zap className="mr-2 h-4 w-4" />Capture</Button>
+                  <Button onClick={addCapture} className="h-11 rounded-2xl bg-white px-4 text-black hover:bg-slate-200"><Zap className="mr-2 inline h-4 w-4" />Capture</Button>
                 </div>
               </GlassCard>
             </motion.div>
 
             <motion.div initial={{ opacity: 0, y: 18 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.08 }}>
               <GlassCard>
-                <SectionLabel number="05" title="Habits" right="0/6" />
+                <SectionLabel number="05" title="Habits" right={`${completedHabits}/${habits.length}`} />
                 <div className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-3">
                   {habits.map((habit) => (
-                    <div key={habit.title} className="rounded-2xl border border-white/10 bg-black/25 p-4 transition hover:bg-white/[0.05]">
+                    <button
+                      key={habit.id}
+                      onClick={() => setHabits((prev) => prev.map((h) => h.id === habit.id ? { ...h, done: !h.done } : h))}
+                      className={`rounded-2xl border border-white/10 p-4 text-left transition ${habit.done ? "bg-emerald-400/10" : "bg-black/25 hover:bg-white/[0.05]"}`}
+                    >
                       <div className="flex items-center justify-between">
-                        <CheckCircle2 className="h-4 w-4 text-slate-600" />
-                        <span className="text-xs text-slate-600">+0</span>
+                        <CheckCircle2 className={`h-4 w-4 ${habit.done ? "text-emerald-300" : "text-slate-600"}`} />
+                        <span className="text-xs text-slate-600">+1</span>
                       </div>
-                      <p className="mt-4 text-sm font-medium text-slate-200">{habit.title}</p>
+                      <p className={`mt-4 text-sm font-medium ${habit.done ? "text-emerald-100" : "text-slate-200"}`}>{habit.title}</p>
                       <p className="mt-1 text-[10px] uppercase tracking-[0.16em] text-slate-500">{habit.meta}</p>
-                    </div>
+                    </button>
                   ))}
                 </div>
               </GlassCard>
@@ -303,10 +324,7 @@ export default function NovaOSDashboard() {
                   {projects.map((project) => (
                     <div key={project.name} className="rounded-2xl border border-white/10 bg-black/25 p-4">
                       <div className="flex items-center justify-between gap-3">
-                        <div>
-                          <h3 className="font-medium text-slate-100">{project.name}</h3>
-                          <p className="text-xs uppercase tracking-[0.18em] text-slate-500">{project.type}</p>
-                        </div>
+                        <div><h3 className="font-medium text-slate-100">{project.name}</h3><p className="text-xs uppercase tracking-[0.18em] text-slate-500">{project.type}</p></div>
                         <span className="rounded-full border border-white/10 bg-white/[0.04] px-2 py-1 text-xs text-slate-400">{project.status}</span>
                       </div>
                       <div className="mt-3 h-2 overflow-hidden rounded-full bg-white/5">
@@ -324,16 +342,13 @@ export default function NovaOSDashboard() {
                 <div className="grid grid-cols-7 gap-2 text-center text-xs text-slate-500">
                   {["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"].map((day, idx) => (
                     <div key={day} className={`rounded-xl border p-3 ${idx === 4 ? "border-emerald-300/40 bg-emerald-300/10 text-emerald-200" : "border-white/10 bg-black/20"}`}>
-                      <p>{day}</p>
-                      <p className="mt-1 text-lg text-slate-200">{idx + 1}</p>
+                      <p>{day}</p><p className="mt-1 text-lg text-slate-200">{idx + 1}</p>
                     </div>
                   ))}
                 </div>
                 <div className="mt-4 space-y-2">
                   {["11:30 · Training session", "14:00 · Deep work", "19:00 · Bible study"].map((event) => (
-                    <div key={event} className="flex items-center gap-3 rounded-2xl border border-white/10 bg-black/20 p-3 text-sm text-slate-300">
-                      <CalendarDays className="h-4 w-4 text-emerald-300" /> {event}
-                    </div>
+                    <div key={event} className="flex items-center gap-3 rounded-2xl border border-white/10 bg-black/20 p-3 text-sm text-slate-300"><CalendarDays className="h-4 w-4 text-emerald-300" /> {event}</div>
                   ))}
                 </div>
               </GlassCard>
@@ -347,17 +362,13 @@ export default function NovaOSDashboard() {
                 <div className="rounded-2xl border border-emerald-300/20 bg-emerald-300/[0.06] p-4">
                   <div className="flex items-center gap-3">
                     <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-emerald-300 text-black"><Bot className="h-5 w-5" /></div>
-                    <div>
-                      <p className="font-semibold">Nova is standing by.</p>
-                      <p className="text-xs text-slate-400">Tell the system what to build, write, plan, or remember.</p>
-                    </div>
+                    <div><p className="font-semibold">Nova is standing by.</p><p className="text-xs text-slate-400">Next phase connects this to OpenAI and Telegram.</p></div>
                   </div>
                 </div>
                 <div className="mt-3 space-y-2">
                   {quickActions.map((action) => (
                     <button key={action} className="flex w-full items-center justify-between rounded-2xl border border-white/10 bg-black/25 p-3 text-left text-sm text-slate-300 transition hover:bg-white/[0.06]">
-                      <span>{action}</span>
-                      <ChevronRight className="h-4 w-4 text-slate-600" />
+                      <span>{action}</span><ChevronRight className="h-4 w-4 text-slate-600" />
                     </button>
                   ))}
                 </div>
@@ -370,11 +381,14 @@ export default function NovaOSDashboard() {
                 <div className="space-y-3">
                   <div className="rounded-2xl border border-white/10 bg-black/25 p-3">
                     <div className="mb-2 flex items-center gap-2 text-sm"><Target className="h-4 w-4 text-emerald-300" /> This Week</div>
-                    <div className="flex gap-2"><input placeholder="Add a weekly goal" className="h-9 flex-1 rounded-xl border border-white/10 bg-black/40 px-3 text-sm outline-none placeholder:text-slate-600" /><Button size="icon" className="h-9 w-9 rounded-xl bg-white text-black"><Plus className="h-4 w-4" /></Button></div>
+                    <div className="flex gap-2"><input value={goal} onChange={(e) => setGoal(e.target.value)} onKeyDown={(e) => e.key === "Enter" && addGoal()} placeholder="Add a weekly goal" className="h-9 flex-1 rounded-xl border border-white/10 bg-black/40 px-3 text-sm outline-none placeholder:text-slate-600" /><Button onClick={addGoal} className="h-9 w-9 rounded-xl bg-white text-black"><Plus className="mx-auto h-4 w-4" /></Button></div>
                   </div>
+                  {goals.map((item) => (
+                    <div key={item} className="rounded-2xl border border-white/10 bg-emerald-400/10 p-3 text-sm text-emerald-100">{item}</div>
+                  ))}
                   <div className="rounded-2xl border border-white/10 bg-black/25 p-3">
                     <div className="mb-2 flex items-center gap-2 text-sm"><TrendingUp className="h-4 w-4 text-emerald-300" /> This Month</div>
-                    <div className="flex gap-2"><input placeholder="Add a monthly goal" className="h-9 flex-1 rounded-xl border border-white/10 bg-black/40 px-3 text-sm outline-none placeholder:text-slate-600" /><Button size="icon" className="h-9 w-9 rounded-xl bg-white text-black"><Plus className="h-4 w-4" /></Button></div>
+                    <p className="text-sm text-slate-500">Connect Supabase next so goals save permanently.</p>
                   </div>
                 </div>
               </GlassCard>
@@ -383,10 +397,7 @@ export default function NovaOSDashboard() {
             <motion.div initial={{ opacity: 0, x: 18 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.15 }}>
               <GlassCard>
                 <SectionLabel number="10" title="Command Search" right="⌘K" />
-                <div className="relative">
-                  <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-600" />
-                  <input placeholder="Search projects, clients, notes..." className="h-11 w-full rounded-2xl border border-white/10 bg-black/35 pl-10 pr-3 text-sm outline-none placeholder:text-slate-600" />
-                </div>
+                <div className="relative"><Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-600" /><input placeholder="Search projects, clients, notes..." className="h-11 w-full rounded-2xl border border-white/10 bg-black/35 pl-10 pr-3 text-sm outline-none placeholder:text-slate-600" /></div>
               </GlassCard>
             </motion.div>
 
@@ -394,8 +405,8 @@ export default function NovaOSDashboard() {
               <GlassCard>
                 <SectionLabel number="11" title="System Status" right="MVP" />
                 <div className="space-y-2 text-sm text-slate-400">
-                  <div className="flex items-center justify-between"><span>Frontend</span><span className="text-emerald-300">Ready</span></div>
-                  <div className="flex items-center justify-between"><span>Mobile PWA</span><span>Next</span></div>
+                  <div className="flex items-center justify-between"><span>Frontend</span><span className="text-emerald-300">Live</span></div>
+                  <div className="flex items-center justify-between"><span>Checklists</span><span className="text-emerald-300">Working</span></div>
                   <div className="flex items-center justify-between"><span>Login / Database</span><span>Next</span></div>
                   <div className="flex items-center justify-between"><span>AI API</span><span>Next</span></div>
                 </div>
