@@ -1,3 +1,5 @@
+"use client";
+
 import React, { useMemo, useState } from "react";
 import { motion } from "framer-motion";
 import {
@@ -24,8 +26,21 @@ import {
   Wallet,
   Zap,
 } from "lucide-react";
-import { Card, CardContent } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
+function Card({ children, className = "" }: any) {
+  return <div className={`rounded-2xl ${className}`}>{children}</div>;
+}
+
+function CardContent({ children, className = "" }: any) {
+  return <div className={className}>{children}</div>;
+}
+
+function Button({ children, className = "", size, variant, ...props }: any) {
+  return (
+    <button className={className} {...props}>
+      {children}
+    </button>
+  );
+}
 
 const navItems = [
   { label: "Home", icon: Home },
