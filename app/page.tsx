@@ -1,5 +1,6 @@
 "use client";
 
+import { supabase } from "@/lib/supabase";
 import React, { useEffect, useMemo, useState } from "react";
 import { motion } from "framer-motion";
 import {
@@ -171,7 +172,7 @@ export default function NovaOSDashboard() {
   const [activeTab, setActiveTab] = useState("Home");
   const [clock, setClock] = useState(getEasternTime());
   const [capture, setCapture] = useState("");
-  const [tasks, setTasks] = useState<Task[]>(startingTasks);
+  const [tasks, setTasks] = useState<Task[]>([]);
   const [habits, setHabits] = useState<Habit[]>(startingHabits);
   const [goals, setGoals] = useState<Goal[]>([]);
   const [goal, setGoal] = useState("");
@@ -179,7 +180,28 @@ export default function NovaOSDashboard() {
   const [events, setEvents] = useState<CalendarEvent[]>(startingEvents);
   const [eventTitle, setEventTitle] = useState("");
   const [eventTime, setEventTime] = useState("");
+useEffect(() => {
+  fetchTasks();
+}, []);
 
+async function fetchTasks() {
+  const { data, error } = await supabase
+    .from("tasks")
+    .select("*")
+    .order("created_at", { ascending: false });
+
+  if (!error && data) {
+    setTasks(
+      data.map((task: any) => ({
+        id: task.id,
+        title: task.title,
+        tag: task.tag,
+        priority: task.priority,
+        done: task.done,
+      }))
+    );
+  }
+}
   useEffect(() => {
     const timer = setInterval(() => setClock(getEasternTime()), 1000);
     return () => clearInterval(timer);
@@ -197,14 +219,36 @@ export default function NovaOSDashboard() {
   const completedTasks = tasks.filter((task) => task.done).length;
   const completedHabits = habits.filter((habit) => habit.done).length;
 
-  function addCapture() {
-    if (!capture.trim()) return;
+  async function addCapture() {
+  if (!capture.trim()) return;
+
+  const newTask = {
+    title: capture.trim(),
+    tag: "capture",
+    priority: "+1",
+    done: false,
+  };
+
+  const { data, error } = await supabase
+    .from("tasks")
+    .insert([newTask])
+    .select();
+
+  if (!error && data) {
     setTasks((prev) => [
-      { id: Date.now(), title: capture.trim(), tag: "capture", priority: "+1", done: false },
+      {
+        id: data[0].id,
+        title: data[0].title,
+        tag: data[0].tag,
+        priority: data[0].priority,
+        done: data[0].done,
+      },
       ...prev,
     ]);
-    setCapture("");
   }
+
+  setCapture("");
+}
 
   function addGoal() {
     if (!goal.trim()) return;
