@@ -616,18 +616,37 @@ async function fetchTasks() {
                 </Button>
                 <div className="mt-4 space-y-2">
                   {events.map((event) => (
-                    <div key={event.id} className="flex items-center gap-3 rounded-2xl border border-white/10 bg-black/20 p-3 text-sm text-slate-300">
-                      <CalendarDays className="h-4 w-4 text-emerald-300" />
-                      <div className="min-w-0 flex-1"><p className="truncate">{event.start}–{event.end} · {event.title}</p><p className="text-[10px] uppercase tracking-[0.18em] text-slate-500">{event.type}{event.recurring ? ` · ${event.recurring}` : ""}</p></div>
-                      <button onClick={async () => {
-  setEvents((prev) => prev.filter((item) => item.id !== event.id));
-  await supabase
-    .from("calendar_events")
-    .delete()
-    .eq("id", event.id);
-}}
-<div>
-                  ))}
+  <div
+    key={event.id}
+    className="flex items-center gap-3 rounded-2xl border border-white/10 bg-black/20 p-3 text-sm text-slate-300"
+  >
+    <CalendarDays className="h-4 w-4 text-emerald-300" />
+
+    <div className="min-w-0 flex-1">
+      <p className="truncate">
+        {event.start}–{event.end} · {event.title}
+      </p>
+      <p className="text-[10px] uppercase tracking-[0.18em] text-slate-500">
+        {event.type}
+        {event.recurring ? ` · ${event.recurring}` : ""}
+      </p>
+    </div>
+
+    <button
+      onClick={async () => {
+        setEvents((prev) => prev.filter((item) => item.id !== event.id));
+
+        await supabase
+          .from("calendar_events")
+          .delete()
+          .eq("id", event.id);
+      }}
+      className="text-slate-600 hover:text-red-300"
+    >
+      <Trash2 className="h-4 w-4" />
+    </button>
+  </div>
+))}
                 </div>
               </GlassCard>
             )}
