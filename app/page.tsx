@@ -414,7 +414,18 @@ async function fetchTasks() {
                   {tasks.map((task) => (
                     <div key={task.id} className={`group flex w-full items-center gap-3 rounded-2xl border border-white/10 p-3 transition ${task.done ? "bg-emerald-400/10" : "bg-black/20 hover:bg-white/[0.06]"}`}>
                       <button
-                        onClick={() => setTasks((prev) => prev.map((t) => t.id === task.id ? { ...t, done: !t.done } : t))}
+                        onClick={async () => {
+  const newDone = !task.done;
+
+  setTasks((prev) =>
+    prev.map((t) => (t.id === task.id ? { ...t, done: newDone } : t))
+  );
+
+  await supabase
+    .from("tasks")
+    .update({ done: newDone })
+    .eq("id", task.id);
+}}
                         className={`flex h-5 w-5 items-center justify-center rounded-md border ${task.done ? "border-emerald-300 bg-emerald-300 text-black" : "border-slate-700 text-transparent"}`}
                       >
                         <Check className="h-3.5 w-3.5" />
@@ -424,7 +435,14 @@ async function fetchTasks() {
                         <p className="text-[10px] uppercase tracking-[0.18em] text-slate-500">{task.tag}</p>
                       </div>
                       <span className="text-xs text-slate-500">{task.priority}</span>
-                      <button onClick={() => setTasks((prev) => prev.filter((t) => t.id !== task.id))} className="text-slate-600 hover:text-red-300">
+                      <button onClick={async () => {
+  setTasks((prev) => prev.filter((t) => t.id !== task.id));
+
+  await supabase
+    .from("tasks")
+    .delete()
+    .eq("id", task.id);
+}} className="text-slate-600 hover:text-red-300">
                         <Trash2 className="h-4 w-4" />
                       </button>
                     </div>
