@@ -625,8 +625,8 @@ async function fetchTasks() {
     .from("calendar_events")
     .delete()
     .eq("id", event.id);
-}
-</div>
+}}
+<div>
                   ))}
                 </div>
               </GlassCard>
