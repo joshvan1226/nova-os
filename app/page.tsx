@@ -177,12 +177,13 @@ export default function NovaOSDashboard() {
   const [goals, setGoals] = useState<Goal[]>([]);
   const [goal, setGoal] = useState("");
   const [modules, setModules] = useState<Module[]>(startingModules);
-  const [events, setEvents] = useState<CalendarEvent[]>(startingEvents);
+  const [events, setEvents] = useState<CalendarEvent[]>([]);
   const [eventTitle, setEventTitle] = useState("");
   const [eventTime, setEventTime] = useState("");
 useEffect(() => {
   fetchTasks();
   fetchGoals();
+  fetchEvents();
 }, []);
 async function fetchGoals() {
   const { data, error } = await supabase
@@ -197,6 +198,26 @@ async function fetchGoals() {
         title: goal.title,
         category: goal.category,
         done: goal.done,
+      }))
+    );
+  }
+}
+async function fetchEvents() {
+  const { data, error } = await supabase
+    .from("calendar_events")
+    .select("*")
+    .order("created_at", { ascending: false });
+
+  if (!error && data) {
+    setEvents(
+      data.map((event: any) => ({
+        id: event.id,
+        title: event.title,
+        date: event.date,
+        start: event.start_time,
+        end: event.end_time,
+        type: event.event_type,
+        recurring: event.recurring,
       }))
     );
   }
@@ -296,22 +317,43 @@ async function fetchTasks() {
   setGoal("");
 }
 
-  function addCalendarEvent() {
-    if (!eventTitle.trim()) return;
+  async function addCalendarEvent() {
+  if (!eventTitle.trim()) return;
+
+  const newEvent = {
+    title: eventTitle.trim(),
+    date: "Tomorrow",
+    start_time: eventTime.trim() || "12:00 PM",
+    end_time: "Auto",
+    event_type: "fixed",
+    recurring: "",
+    priority: 1,
+    movable: false,
+  };
+
+  const { data, error } = await supabase
+    .from("calendar_events")
+    .insert([newEvent])
+    .select();
+
+  if (!error && data) {
     setEvents((prev) => [
       {
-        id: Date.now(),
-        title: eventTitle.trim(),
-        date: "Tomorrow",
-        start: eventTime.trim() || "12:00 PM",
-        end: "Auto",
-        type: "fixed",
+        id: data[0].id,
+        title: data[0].title,
+        date: data[0].date,
+        start: data[0].start_time,
+        end: data[0].end_time,
+        type: data[0].event_type,
+        recurring: data[0].recurring,
       },
       ...prev,
     ]);
-    setEventTitle("");
-    setEventTime("");
   }
+
+  setEventTitle("");
+  setEventTime("");
+}
 
   function simulateSmartReschedule() {
     const clientEvent: CalendarEvent = {
@@ -577,8 +619,14 @@ async function fetchTasks() {
                     <div key={event.id} className="flex items-center gap-3 rounded-2xl border border-white/10 bg-black/20 p-3 text-sm text-slate-300">
                       <CalendarDays className="h-4 w-4 text-emerald-300" />
                       <div className="min-w-0 flex-1"><p className="truncate">{event.start}–{event.end} · {event.title}</p><p className="text-[10px] uppercase tracking-[0.18em] text-slate-500">{event.type}{event.recurring ? ` · ${event.recurring}` : ""}</p></div>
-                      <button onClick={() => setEvents((prev) => prev.filter((item) => item.id !== event.id))} className="text-slate-600 hover:text-red-300"><Trash2 className="h-4 w-4" /></button>
-                    </div>
+                      <button onClick={async () => {
+  setEvents((prev) => prev.filter((item) => item.id !== event.id));
+  await supabase
+    .from("calendar_events")
+    .delete()
+    .eq("id", event.id);
+}
+</div>
                   ))}
                 </div>
               </GlassCard>
