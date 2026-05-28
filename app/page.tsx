@@ -182,8 +182,25 @@ export default function NovaOSDashboard() {
   const [eventTime, setEventTime] = useState("");
 useEffect(() => {
   fetchTasks();
+  fetchGoals();
 }, []);
+async function fetchGoals() {
+  const { data, error } = await supabase
+    .from("goals")
+    .select("*")
+    .order("created_at", { ascending: false });
 
+  if (!error && data) {
+    setGoals(
+      data.map((goal: any) => ({
+        id: goal.id,
+        title: goal.title,
+        category: goal.category,
+        done: goal.done,
+      }))
+    );
+  }
+}
 async function fetchTasks() {
   const { data, error } = await supabase
     .from("tasks")
@@ -250,11 +267,34 @@ async function fetchTasks() {
   setCapture("");
 }
 
-  function addGoal() {
-    if (!goal.trim()) return;
-    setGoals((prev) => [{ id: Date.now(), title: goal.trim(), category: "weekly", done: false }, ...prev]);
-    setGoal("");
+  async function addGoal() {
+  if (!goal.trim()) return;
+
+  const newGoal = {
+    title: goal.trim(),
+    category: "weekly",
+    done: false,
+  };
+
+  const { data, error } = await supabase
+    .from("goals")
+    .insert([newGoal])
+    .select();
+
+  if (!error && data) {
+    setGoals((prev) => [
+      {
+        id: data[0].id,
+        title: data[0].title,
+        category: data[0].category,
+        done: data[0].done,
+      },
+      ...prev,
+    ]);
   }
+
+  setGoal("");
+}
 
   function addCalendarEvent() {
     if (!eventTitle.trim()) return;
@@ -575,7 +615,14 @@ async function fetchTasks() {
                 {goals.map((item) => (
                   <div key={item.id} className="flex items-center gap-2 rounded-2xl border border-white/10 bg-emerald-400/10 p-3 text-sm text-emerald-100">
                     <span className="flex-1">{item.title}</span>
-                    <button onClick={() => setGoals((prev) => prev.filter((g) => g.id !== item.id))} className="text-slate-500 hover:text-red-300"><Trash2 className="h-4 w-4" /></button>
+                    <button onClick={async () => {
+  setGoals((prev) => prev.filter((g) => g.id !== item.id));
+
+  await supabase
+    .from("goals")
+    .delete()
+    .eq("id", item.id);
+}} className="text-slate-500 hover:text-red-300"><Trash2 className="h-4 w-4" /></button>
                   </div>
                 ))}
               </div>
